@@ -1,0 +1,107 @@
+/**
+ * grpc contract definiton for location service api,
+ * consumed by internal services
+ */
+
+syntax = "proto3";
+
+service LocationService {
+
+  // couriers
+
+  // id: id1
+  // location: []
+  rpc GetCourier(GetCourierRequest) returns (GetCourierResponse) {}
+
+  // [id1, id2, id3, ...]
+  rpc GetAllNearbyCouriers(GetAllNearbyCouriersRequest) returns (GetAllNearbyCouriersResponse) {}
+
+
+  rpc GetUnmatchedNearbyCouriers(GetAllNearbyCouriersRequest) returns (GetAllNearbyCouriersResponse) {}
+
+
+
+
+
+
+  // orders
+
+
+  // id: id1
+  // location: []
+  rpc GetOrderLocation(GetOrderLocationRequest) returns (GetOrderLocationResponse) {}
+
+  // [id1, id2, id3, ...]
+  rpc GetNearbyOrders(GetNearbyOrdersRequest) returns (GetNearbyOrdersResponse) {}
+
+  //
+  rpc GetAvailableOrdersNearCourier(GetAvailableOrdersNearCourierRequest) returns (GetAvailableOrdersNearCourierResponse) {}
+
+}
+
+
+
+// good
+// GetCourier() contract definition
+message GetCourierRequest {
+  string CourierId = 1;
+}
+
+message GetCourierResponse {
+  string type = 1;
+  Geometry geometry = 2;
+}
+
+
+
+
+
+
+
+// GetAllNearbyCouriers() contract definition
+message GetAllNearbyCouriersRequest {
+  string type = 1;
+  Geometry geometry = 2;
+}
+
+message GetAllNearbyCouriersResponse {
+  List<Geometry> Couriers = 1;
+  List<List<float>> Couriers = 1;
+}
+
+
+
+// GetOrderLocation() contract definiton
+message GetOrderLocationRequest {
+  string orderId = 1;
+}
+
+message GetOrderLocationResponse {
+  string type = 1;
+  Geometry geometry = 2;
+}
+
+
+
+// GetNearbyOrdersRequest() contract definiton
+message GetNearbyOrdersRequest {
+  Geometry geometry = 1;
+
+}
+
+message GetNearbyOrdersResponse {
+
+}
+
+
+
+
+// good
+// GetAvailableOrdersNearCourier() contract definiton
+message GetAvailableOrdersNearCourierRequest {
+  string CourierId = 1;
+}
+
+message GetAvailableOrdersNearCourierResponse {
+  List<string> orderIds = 1;
+}

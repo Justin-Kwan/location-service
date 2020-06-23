@@ -1,0 +1,35 @@
+auth:
+  websocket_api_key:      "test_ws_api_key"
+  rest_api_key:           "test_rest_api_key"
+
+websocket_server:
+  read_deadline:        50
+  read_timeout:         50
+  write_timeout:        50
+  message_size_limit:   1000
+  address:              "127.0.0.1:8080"
+  path:                 "/ws"
+
+redis_keydb:
+  idle_timeout:           200
+  max_idle_connections:   500
+  max_active_connections: 1200
+  address:                "127.0.0.1:6380"
+  password:               "test_redis_password"
+  connection_protocol:    "tcp"
+
+redis_geodb:
+  idle_timeout:           200
+  max_idle_connections:   500
+  max_active_connections: 1200
+  address:                "127.0.0.1:6390"
+  password:               "test_redis_password"
+  connection_protocol:    "tcp"
+
+stores:
+  order:
+    matched_key:          "matched:test_orders"
+    unmatched_key:        "unmatched:test_orders"
+  courier:
+    matched_key:          "matched:test_couriers"
+    unmatched_key:        "unmatched:test_couriers"
