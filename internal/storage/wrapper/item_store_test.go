@@ -1,4 +1,4 @@
-package wrappers
+package wrapper
 
 import (
 	"math/rand"
@@ -124,7 +124,7 @@ func getTestCouriers() []mock.Courier {
 	}
 }
 
-func setupCourierRepoTests() func() {
+func setupItemStoreTests() func() {
 	cfg := testutil.GetConfig()
 	keyDBPool := redis.NewPool(&(*cfg).RedisKeyDB)
 	geoDBPool := redis.NewPool(&(*cfg).RedisGeoDB)
@@ -143,7 +143,7 @@ func setupCourierRepoTests() func() {
 	}
 }
 
-func populateCourierRepo(t *testing.T) {
+func populateItemStore(t *testing.T) {
 	tcs := getTestCouriers()
 
 	for _, tc := range tcs {
@@ -186,11 +186,11 @@ func updateValsRandomly(tcs []mock.Courier) {
 	}
 }
 
-func TestCourierRepoAddNewNormalCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestAddNew_NormalCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	tcs := getTestCouriers()
 
 	for _, tc := range tcs {
@@ -222,11 +222,11 @@ func TestCourierRepoAddNewNormalCases(t *testing.T) {
 	}
 }
 
-func TestAddAlreadyExistsCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestAddNew_AlreadyExistsCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	tcs := getTestCouriers()
 	updateValsRandomly(tcs)
 
@@ -266,7 +266,7 @@ func TestAddAlreadyExistsCases(t *testing.T) {
 }
 
 var (
-	GetidNotFoundCases = []struct {
+	Get_IDNotFoundCases = []struct {
 		inputid     string
 		expectedErr error
 	}{
@@ -277,11 +277,11 @@ var (
 	}
 )
 
-func TestCrGetNormalCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestGet_NormalCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	tcs := getTestCouriers()
 
 	for _, tc := range tcs {
@@ -299,8 +299,8 @@ func TestCrGetNormalCases(t *testing.T) {
 	}
 }
 
-func TestGetidNotFoundCases(t *testing.T) {
-	for _, c := range GetidNotFoundCases {
+func TestGet_IDNotFoundCases(t *testing.T) {
+	for _, c := range Get_IDNotFoundCases {
 		// function under test
 		_, err := keyDB.Get(c.inputid)
 		assert.EqualError(t, err, c.expectedErr.Error())
@@ -308,7 +308,7 @@ func TestGetidNotFoundCases(t *testing.T) {
 }
 
 var (
-	GetAllNearbyNormalCases = []struct {
+	GetAllNearby_NormalCases = []struct {
 		inputCoord  map[string]float64
 		inputRadius float64
 		expectedIDs []string
@@ -336,7 +336,7 @@ var (
 			[]string{"test_courier_id1", "test_courier_id10", "test_courier_id11", "test_courier_id2", "test_courier_id3", "test_courier_id7", "test_courier_id7.5", "test_courier_id8", "test_courier_id9"}},
 	}
 
-	GetUnmatchedNearbyNormalCases = []struct {
+	GetUnmatchedNearby_NormalCases = []struct {
 		inputCoord  map[string]float64
 		inputRadius float64
 		expectedIDs []string
@@ -365,13 +365,13 @@ var (
 	}
 )
 
-func TestGetAllNearbyNormalCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestGetAllNearby_NormalCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 
-	for _, c := range GetAllNearbyNormalCases {
+	for _, c := range GetAllNearby_NormalCases {
 		// function under test
 		cIDs, err := itemStore.GetAllNearby(map[string]float64{
 			"lon": c.inputCoord["lon"],
@@ -390,14 +390,14 @@ func TestGetAllNearbyNormalCases(t *testing.T) {
 	}
 }
 
-func TestGetAllNearbyInBothKeysCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestGetAllNearby_InBothKeysCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	swapMatchStatusRandomly()
 
-	for _, c := range GetAllNearbyNormalCases {
+	for _, c := range GetAllNearby_NormalCases {
 		// function under test
 		cIDs, err := itemStore.GetAllNearby(map[string]float64{
 			"lon": c.inputCoord["lon"],
@@ -416,13 +416,13 @@ func TestGetAllNearbyInBothKeysCases(t *testing.T) {
 	}
 }
 
-func TestGetUnmatchedNearbyNormalCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestGetUnmatchedNearby_NormalCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 
-	for _, c := range GetUnmatchedNearbyNormalCases {
+	for _, c := range GetUnmatchedNearby_NormalCases {
 		cIDs, err := itemStore.GetUnmatchedNearby(map[string]float64{
 			"lon": c.inputCoord["lon"],
 			"lat": c.inputCoord["lat"],
@@ -441,11 +441,11 @@ func TestGetUnmatchedNearbyNormalCases(t *testing.T) {
 
 }
 
-func TestGetUnmatchedNearbyEmptyCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestGetUnmatchedNearby_EmptyCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	tcs := getTestCouriers()
 
 	// setup
@@ -457,7 +457,7 @@ func TestGetUnmatchedNearbyEmptyCases(t *testing.T) {
 		}
 	}
 
-	for _, c := range GetUnmatchedNearbyNormalCases {
+	for _, c := range GetUnmatchedNearby_NormalCases {
 		cIDs, err := itemStore.GetUnmatchedNearby(map[string]float64{
 			"lon": c.inputCoord["lon"],
 			"lat": c.inputCoord["lat"],
@@ -472,11 +472,11 @@ func TestGetUnmatchedNearbyEmptyCases(t *testing.T) {
 	}
 }
 
-func TestUpdateNormalCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestUpdate_NormalCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	tcs := getTestCouriers()
 	updateValsRandomly(tcs)
 
@@ -509,7 +509,7 @@ func TestUpdateNormalCases(t *testing.T) {
 	}
 }
 
-func TestUpdateKeyNotFoundCases(t *testing.T) {
+func TestUpdate_KeyNotFoundCases(t *testing.T) {
 	tcs := getTestCouriers()
 
 	for _, tc := range tcs {
@@ -521,7 +521,7 @@ func TestUpdateKeyNotFoundCases(t *testing.T) {
 }
 
 var (
-	DeleteCourierNotFoundCases = []struct {
+	Delete_CourierNotFoundCases = []struct {
 		inputid string
 	}{
 		{"non_existent_member"},
@@ -531,11 +531,11 @@ var (
 	}
 )
 
-func TestCRDeleteNormalCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestDelete_NormalCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	populateCourierRepo(t)
+	populateItemStore(t)
 	tcs := getTestCouriers()
 
 	for _, tc := range tcs {
@@ -557,11 +557,11 @@ func TestCRDeleteNormalCases(t *testing.T) {
 	}
 }
 
-func TestDeleteMemberNotFoundCases(t *testing.T) {
-	teardownTests := setupCourierRepoTests()
+func TestDelete_MemberNotFoundCases(t *testing.T) {
+	teardownTests := setupItemStoreTests()
 	defer teardownTests()
 
-	for _, c := range DeleteCourierNotFoundCases {
+	for _, c := range Delete_CourierNotFoundCases {
 		// function under test
 		assert.NoError(t, itemStore.Delete(c.inputid))
 	}

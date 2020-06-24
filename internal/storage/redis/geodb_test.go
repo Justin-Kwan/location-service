@@ -15,7 +15,7 @@ const (
 	PrimaryTestKey   = "primary_test_Key"
 	SecondaryTestKey = "secondary_test_Key"
 
-	UnitKm         = "km"
+	UnitKM         = "km"
 	AscendingOrder = "ASC"
 
 	MaxFloatDelta = 0.01001
@@ -144,7 +144,7 @@ func NewRadiusQuery(Key string, lon, lat, radius float64) *GeoQuery {
 		},
 		Key:    Key,
 		Radius: radius,
-		Unit:   UnitKm,
+		Unit:   UnitKM,
 		Order:  AscendingOrder,
 	}
 }
@@ -176,8 +176,15 @@ func populateGeoDB(t *testing.T) {
 	}
 }
 
+func oppositeTestKey(k string) string {
+	if k == PrimaryTestKey {
+		return SecondaryTestKey
+	}
+	return PrimaryTestKey
+}
+
 var (
-	SetBadCoordCases = []struct {
+	Set_BadCoordCases = []struct {
 		inputMember string
 		inputCoord  map[string]float64
 		expectedErr error
@@ -210,7 +217,7 @@ var (
 	}
 )
 
-func TestSetNormalCases(t *testing.T) {
+func TestSet_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
@@ -236,8 +243,8 @@ func TestSetNormalCases(t *testing.T) {
 	}
 }
 
-func TestSetBadCoords(t *testing.T) {
-	for _, c := range SetBadCoordCases {
+func TestSet_BadCoords(t *testing.T) {
+	for _, c := range Set_BadCoordCases {
 		err := geoDB.Set(
 			NewSetQuery(PrimaryTestKey, c.inputMember, c.inputCoord["lon"], c.inputCoord["lat"]))
 		assert.EqualError(t, err, c.expectedErr.Error())
@@ -245,7 +252,7 @@ func TestSetBadCoords(t *testing.T) {
 }
 
 var (
-	SetIfExistsMemberNotFoundCases = []struct {
+	SetIfExists_MemberNotFoundCases = []struct {
 		inputMember string
 		inputCoord  map[string]float64
 		expectedErr error
@@ -265,7 +272,7 @@ var (
 	}
 )
 
-func TestSetIfExistsNormalCases(t *testing.T) {
+func TestGeoDBSetIfExists_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
@@ -298,11 +305,11 @@ func TestSetIfExistsNormalCases(t *testing.T) {
 	}
 }
 
-func TestSetIfExistsMemberNotFoundCases(t *testing.T) {
+func TestGeoDBSetIfExists_MemberNotFoundCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
-	for _, c := range SetIfExistsMemberNotFoundCases {
+	for _, c := range SetIfExists_MemberNotFoundCases {
 		// function under test
 		err := geoDB.SetIfExists(NewSetQuery(
 			PrimaryTestKey,
@@ -323,7 +330,7 @@ func TestSetIfExistsMemberNotFoundCases(t *testing.T) {
 }
 
 var (
-	BatchSetIfExistsCases = []struct {
+	BatchSetIfExists_NormalCases = []struct {
 		inputQueries []*GeoQuery
 	}{
 		// batch of update queries
@@ -346,7 +353,7 @@ var (
 		}},
 	}
 
-	BatchSetIfExistsMemberNotFoundCases = []struct {
+	BatchSetIfExists_MemberNotFoundCases = []struct {
 		inputMember string
 		expectedErr error
 	}{
@@ -357,14 +364,14 @@ var (
 	}
 )
 
-func TestBatchSetIfExistsNormalCases(t *testing.T) {
+func TestBatchSetIfExists_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
 	populateGeoDB(t)
 
 	// test
-	for _, c := range BatchSetIfExistsCases {
+	for _, c := range BatchSetIfExists_NormalCases {
 		err := geoDB.BatchSetIfExists(c.inputQueries...)
 		if err != nil {
 			teardownTests()
@@ -385,12 +392,12 @@ func TestBatchSetIfExistsNormalCases(t *testing.T) {
 	}
 }
 
-func TestBatchSetIfExistsOnEmpty(t *testing.T) {
+func TestBatchSetIfExists_EmptyCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
 	// test
-	for _, c := range BatchSetIfExistsCases {
+	for _, c := range BatchSetIfExists_NormalCases {
 		// function under test
 		err := geoDB.BatchSetIfExists(c.inputQueries...)
 		if err != nil {
@@ -400,7 +407,7 @@ func TestBatchSetIfExistsOnEmpty(t *testing.T) {
 	}
 
 	// assert
-	for _, c := range BatchSetIfExistsCases {
+	for _, c := range BatchSetIfExists_NormalCases {
 		for _, q := range c.inputQueries {
 			_, err := geoDB.Get(&GeoQuery{Key: q.Key, Member: q.Member})
 			assert.EqualError(t, err, types.ErrMemberNotFound.Error())
@@ -408,11 +415,11 @@ func TestBatchSetIfExistsOnEmpty(t *testing.T) {
 	}
 }
 
-func TestGetNormalCases(t *testing.T) {
+func TestGeoDBGet_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
-	for _, c := range BatchSetIfExistsMemberNotFoundCases {
+	for _, c := range BatchSetIfExists_MemberNotFoundCases {
 		// assert error when getting non-existent members
 		q := &GeoQuery{Key: PrimaryTestKey, Member: c.inputMember}
 		_, err := geoDB.Get(q)
@@ -421,7 +428,7 @@ func TestGetNormalCases(t *testing.T) {
 }
 
 var (
-	GetAllInRadiusNormalCases = []struct {
+	GetAllInRadius_NormalCases = []struct {
 		inputLon        float64
 		inputLat        float64
 		inputRadius     float64
@@ -439,7 +446,7 @@ var (
 		{45.12321, 32.124, 1000000, []string{"test_ID8", "test_ID10", "test_ID9", "test_ID11", "test_ID12", "test_ID2", "test_ID1", "test_ID7", "test_ID4"}, nil},
 	}
 
-	GetAllInRadiusBadCoordCases = []struct {
+	GetAllInRadius_BadCoordCases = []struct {
 		inputLon        float64
 		inputLat        float64
 		inputRadius     float64
@@ -451,7 +458,7 @@ var (
 		{30, -86, 10, []string(nil), errors.Errorf("ERR invalid longitude,latitude pair 30.000000,-86.000000")},
 	}
 
-	BatchGetAllInRadiusBadCoordCases = []struct {
+	BatchGetAllInRadius_BadCoordCases = []struct {
 		inputLon        float64
 		inputLat        float64
 		inputRadius     float64
@@ -464,7 +471,7 @@ var (
 	}
 )
 
-func TestGetAllInRadiusNormalCases(t *testing.T) {
+func TestGetAllInRadius_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
@@ -485,7 +492,7 @@ func TestGetAllInRadiusNormalCases(t *testing.T) {
 		}
 	}
 
-	for _, c := range GetAllInRadiusNormalCases {
+	for _, c := range GetAllInRadius_NormalCases {
 		// function under test
 		members, err := geoDB.BatchGetAllInRadius(
 			NewRadiusQuery(
@@ -507,7 +514,7 @@ func TestGetAllInRadiusNormalCases(t *testing.T) {
 	}
 }
 
-func TestGetAllInRadiusBadCoordCases(t *testing.T) {
+func TestGetAllInRadius_BadCoordCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
@@ -528,7 +535,7 @@ func TestGetAllInRadiusBadCoordCases(t *testing.T) {
 		}
 	}
 
-	for _, c := range GetAllInRadiusBadCoordCases {
+	for _, c := range GetAllInRadius_BadCoordCases {
 		// function under test
 		members, err := geoDB.GetAllInRadius(
 			NewRadiusQuery(
@@ -545,7 +552,7 @@ func TestGetAllInRadiusBadCoordCases(t *testing.T) {
 	}
 }
 
-func GetAllInRadiusEmptyCase(t *testing.T) {
+func GetAllInRadius_EmptyCase(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
@@ -565,13 +572,13 @@ func GetAllInRadiusEmptyCase(t *testing.T) {
 	assert.Equal(t, members, []string{}, "should return list of closest POI IDs within radius")
 }
 
-func TestBatchGetAllInRadiusNormalCases(t *testing.T) {
+func TestBatchGetAllInRadius_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
 	populateGeoDB(t)
 
-	for _, c := range GetAllInRadiusNormalCases {
+	for _, c := range GetAllInRadius_NormalCases {
 		// function under test
 		members, err := geoDB.BatchGetAllInRadius(
 			NewRadiusQuery(
@@ -600,13 +607,13 @@ func TestBatchGetAllInRadiusNormalCases(t *testing.T) {
 	}
 }
 
-func TestBatchGetAllInRadiusBadCoordCases(t *testing.T) {
+func TestBatchGetAllInRadius_BadCoordCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
 	populateGeoDB(t)
 
-	for _, c := range BatchGetAllInRadiusBadCoordCases {
+	for _, c := range BatchGetAllInRadius_BadCoordCases {
 		// function under test
 		members, err := geoDB.BatchGetAllInRadius(
 			NewRadiusQuery(
@@ -632,7 +639,7 @@ func TestBatchGetAllInRadiusBadCoordCases(t *testing.T) {
 	}
 }
 
-func TestDelNormalCases(t *testing.T) {
+func TestDelete_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
@@ -653,7 +660,7 @@ func TestDelNormalCases(t *testing.T) {
 }
 
 var (
-	BatchDelNormalCases = []struct {
+	BatchDelete_NormalCases = []struct {
 		inputQueries []*GeoQuery
 	}{
 		{[]*GeoQuery{
@@ -679,14 +686,14 @@ var (
 	}
 )
 
-func TestBatchDelNormalCases(t *testing.T) {
+func TestBatchDelete_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 
 	populateGeoDB(t)
 
 	// test
-	for _, c := range BatchDelNormalCases {
+	for _, c := range BatchDelete_NormalCases {
 		// function under test
 		if err := geoDB.BatchDelete(c.inputQueries...); err != nil {
 			teardownTests()
@@ -701,7 +708,7 @@ func TestBatchDelNormalCases(t *testing.T) {
 	}
 }
 
-func TestBatchDelNoQueryCases(t *testing.T) {
+func TestBatchDelete_NoQueryCases(t *testing.T) {
 	// no geo queries passed in test case (should return error)
 	err := geoDB.BatchDelete([]*GeoQuery{}...)
 	assert.EqualError(t, err, types.ErrNoBatchQueries.Error())
@@ -709,14 +716,7 @@ func TestBatchDelNoQueryCases(t *testing.T) {
 	assert.EqualError(t, err, types.ErrNoBatchQueries.Error())
 }
 
-func oppositeTestKey(k string) string {
-	if k == PrimaryTestKey {
-		return SecondaryTestKey
-	}
-	return PrimaryTestKey
-}
-
-func TestMoveMemberNormalCases(t *testing.T) {
+func TestMoveMember_NormalCases(t *testing.T) {
 	teardownTests := setupGeoDBTests()
 	defer teardownTests()
 

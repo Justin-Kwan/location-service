@@ -1,4 +1,4 @@
-package wrappers
+package wrapper
 
 import (
 	"location-service/internal/storage/redis"
@@ -11,9 +11,9 @@ const (
 )
 
 type ItemStore struct {
+	config *StoreConfig
 	keyDB  KeyDB
 	geoDB  GeoDB
-	config StoreConfig
 }
 
 type StoreConfig struct {
@@ -29,8 +29,8 @@ func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg *types.StoreConfig) *ItemStore {
 	}
 }
 
-func setConfig(cfg *types.StoreConfig) StoreConfig {
-	return StoreConfig{
+func setConfig(cfg *types.StoreConfig) *StoreConfig {
+	return &StoreConfig{
 		matchedKey:   cfg.MatchedKey,
 		unmatchedKey: cfg.UnmatchedKey,
 	}

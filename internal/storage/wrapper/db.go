@@ -1,4 +1,4 @@
-package wrappers
+package wrapper
 
 import (
   "location-service/internal/storage/redis"

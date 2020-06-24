@@ -7,12 +7,6 @@ import (
 	"location-service/internal/types"
 )
 
-type Service struct {
-	courierStore types.ItemStorer
-	orderStore   types.ItemStorer
-	drain        types.Drain
-}
-
 type TrackCourierDTO struct {
 	Location struct {
 		Lon float64
@@ -20,6 +14,12 @@ type TrackCourierDTO struct {
 	}
 	Speed  float64
 	Radius float64
+}
+
+type Service struct {
+	courierStore types.ItemStorer
+	orderStore   types.ItemStorer
+	drain        types.Drain
 }
 
 func NewService(cs, os types.ItemStorer, dn types.Drain) *Service {
@@ -37,13 +37,23 @@ func (s *Service) GetCourier(id string) (*Courier, error) {
 	return c, err
 }
 
+func (s *Service) logCourierUpdate(c *Courier) {
+	log.Printf("-----------------------------------------------")
+	log.Printf("New courier:")
+	log.Printf("id: %s", c.GetID())
+	log.Printf("coord: (%f, %f)", c.GetLon(), c.GetLat())
+	log.Printf("speed: %f", c.Speed)
+	log.Printf("radius: %f", c.Radius)
+	log.Printf("created at: %d", c.CreatedAt)
+	log.Printf("updated at: %d", c.UpdatedAt)
+}
+
 // test!
 func (s *Service) TrackCourier(id string) error {
 	c := NewCourier(id)
 
 	go func() {
 		for {
-			log.Printf("Reading from drain")
 			dto := s.drain.Read().(TrackCourierDTO)
 
 			c.SetLocation(dto.Location.Lon, dto.Location.Lat)
@@ -51,17 +61,8 @@ func (s *Service) TrackCourier(id string) error {
 			c.SetRadius(dto.Radius)
 			c.SetUpdatedAt()
 
-			log.Printf("-----------------------------------------------")
-			log.Printf("New courier:")
-			log.Printf("id: %s", c.ID)
-			log.Printf("coord: (%f, %f)", c.Location.Lon, c.Location.Lat)
-			log.Printf("speed: %f", c.Speed)
-			log.Printf("radius: %f", c.Radius)
-			log.Printf("created at: %d", c.CreatedAt)
-			log.Printf("updated at: %d", c.UpdatedAt)
-
 			s.upsertCourier(c)
-			time.Sleep(2 * time.Second)
+			time.Sleep(2 * time.Second)	// use ticker instead
 		}
 	}()
 
@@ -91,22 +92,26 @@ func (s *Service) GetAllNearbyCouriers(coord map[string]float64, radius float64)
 	return s.courierStore.GetAllNearby(coord, radius)
 }
 
-////////////////////// order functions ////////////////////
+////////////////////// order functions ///////////////////////
 
-// test
-// func (s *Service) AddNewOrder() error {
+// // test!
+// // from message queue
+// func (s *Service) AddNewOrder(location map[string]float64, id string) error {
+// 	o := NewOrder(id)
 //
+// 	err := orderStore.AddNew(o)
+// 	return err
 // }
-
-// test!
-func (s *Service) DeleteOrder(id string) error {
-	return s.orderStore.Delete(id)
-}
-
-func (s *Service) GetAllNearbyUnmatchedOrders(coord map[string]float64, radius float64) ([]string, error) {
-	return s.orderStore.GetAllNearbyUnmatched(coord, radius)
-}
-
-func (s *Service) GetAllNearbyOrders(coord map[string]float64, radius float64) ([]string, error) {
-	return s.orderStore.GetAllNearby(coord, radius)
-}
+//
+// // test!
+// func (s *Service) DeleteOrder(id string) error {
+// 	return s.orderStore.Delete(id)
+// }
+//
+// func (s *Service) GetAllNearbyUnmatchedOrders(coord map[string]float64, radius float64) ([]string, error) {
+// 	return s.orderStore.GetAllNearbyUnmatched(coord, radius)
+// }
+//
+// func (s *Service) GetAllNearbyOrders(coord map[string]float64, radius float64) ([]string, error) {
+// 	return s.orderStore.GetAllNearby(coord, radius)
+// }

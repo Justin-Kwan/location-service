@@ -93,7 +93,7 @@ func populateKeyDB(t *testing.T) {
 	}
 }
 
-func TestKeyDBSetNormalCases(t *testing.T) {
+func TestKeyDBSet_NormalCases(t *testing.T) {
 	teardownTests := setupKeyDBTests()
 	defer teardownTests()
 
@@ -118,7 +118,7 @@ func TestKeyDBSetNormalCases(t *testing.T) {
 }
 
 var (
-	SetIfExistsKeyNotFoundCases = []struct {
+	SetIfExists_KeyNotFoundCases = []struct {
 		inputKey    string
 		inputVal    string
 		expectedErr error
@@ -130,7 +130,7 @@ var (
 	}
 )
 
-func TestKeyDBSetIfExistsNormalCases(t *testing.T) {
+func TestKeyDBSetIfExists_NormalCases(t *testing.T) {
 	teardownTests := setupKeyDBTests()
 	defer teardownTests()
 
@@ -154,10 +154,10 @@ func TestKeyDBSetIfExistsNormalCases(t *testing.T) {
 	}
 }
 
-func TestKeyDBSetIfExistsKeyNotFoundCases(t *testing.T) {
+func TestKeyDBSetIfExists_KeyNotFoundCases(t *testing.T) {
 	setupKeyDBTests()
 
-	for _, c := range SetIfExistsKeyNotFoundCases {
+	for _, c := range SetIfExists_KeyNotFoundCases {
 		// function under test
 		err := keyDB.SetIfExists(c.inputKey, c.inputVal)
 		assert.EqualError(t, err, c.expectedErr.Error())
@@ -165,7 +165,7 @@ func TestKeyDBSetIfExistsKeyNotFoundCases(t *testing.T) {
 }
 
 var (
-	getKeyDBKeyNotFoundCases = []struct {
+	Get_KeyNotFoundCases = []struct {
 		inputKey    string
 		expectedErr error
 	}{
@@ -176,26 +176,25 @@ var (
 	}
 )
 
-func TestKeyDBGet(t *testing.T) {
+func TestKeyDBGet_KeyNotFoundCases(t *testing.T) {
 	teardownTests := setupKeyDBTests()
 	defer teardownTests()
 
-	for _, c := range getKeyDBKeyNotFoundCases {
+	for _, c := range Get_KeyNotFoundCases {
 		// function under test
 		_, err := keyDB.Get(c.inputKey)
 		assert.EqualError(t, err, c.expectedErr.Error())
 	}
 }
 
-func TestKeyDBDelete(t *testing.T) {
+func TestKeyDBDelete_NormalCases(t *testing.T) {
 	teardownTests := setupKeyDBTests()
 	defer teardownTests()
 
 	populateKeyDB(t)
 	testKeys := getTestKeys()
 
-	// test
-	for _, tk := range testKeys { // THIS DOESN'T WORK
+	for _, tk := range testKeys {
 		// function under test
 		if err := keyDB.Delete(tk.Key); err != nil {
 			teardownTests()
