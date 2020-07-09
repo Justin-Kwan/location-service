@@ -1,10 +1,10 @@
-package streaming
+package stream
 
 const (
 	MaxBuffSize = 1024
 )
 
-// Drain is a bidirectional sink that reads and sends data.
+// Drain is a bidirectional sink that receives and sends data.
 type Drain struct {
 	input  <-chan interface{}
 	output chan interface{}
@@ -29,15 +29,24 @@ func (d *Drain) GetOutput() <-chan interface{} {
 }
 
 // Send sends a message onto the output channel.
-func (d *Drain) Send(data interface{}) {
-	d.output <- data
+func (d *Drain) Send(data interface{}) bool {
+	select {
+	case d.output <- data:
+		return true
+	default:
+		return false
+	}
 }
 
-// Read blocks and waits for a message to be received on the input
-// channel. Then, the message is returned.
-func (d *Drain) Read() interface{} {
-	data := <-d.input
-	return data
+// Read chceks if a message is received on the input channel. Then,
+// the message is returned, with a boolean value indication.
+func (d *Drain) Read() (interface{}, bool) {
+	select {
+	case data := <-d.input:										// if received msg
+		return data, true
+	default:																	// otherwise no msg
+		return nil, false
+	}
 }
 
 // Close closes the output channel for the drain.

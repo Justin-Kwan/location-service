@@ -115,7 +115,7 @@ func getTestPOIs() []TestPOI {
 
 func setupGeoDBTests() func() {
 	cfg := testutil.GetConfig()
-	geoDBPool := NewPool(&(*cfg).RedisGeoDB)
+	geoDBPool := NewPool(cfg.RedisGeoDB)
 
 	geoDB = NewGeoDB(geoDBPool)
 	geoDB.Clear()

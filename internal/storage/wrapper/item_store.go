@@ -11,7 +11,7 @@ const (
 )
 
 type ItemStore struct {
-	config *StoreConfig
+	config StoreConfig
 	keyDB  KeyDB
 	geoDB  GeoDB
 }
@@ -21,7 +21,7 @@ type StoreConfig struct {
 	unmatchedKey string
 }
 
-func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg *types.StoreConfig) *ItemStore {
+func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg types.StoreConfig) *ItemStore {
 	return &ItemStore{
 		keyDB:  keyDB,
 		geoDB:  geoDB,
@@ -29,8 +29,8 @@ func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg *types.StoreConfig) *ItemStore {
 	}
 }
 
-func setConfig(cfg *types.StoreConfig) *StoreConfig {
-	return &StoreConfig{
+func setConfig(cfg types.StoreConfig) StoreConfig {
+	return StoreConfig{
 		matchedKey:   cfg.MatchedKey,
 		unmatchedKey: cfg.UnmatchedKey,
 	}
@@ -94,6 +94,19 @@ func (m *ItemStore) GetAllNearby(coord map[string]float64, radius float64) ([]st
 			Unit:   DistUnit,
 			Order:  DistOrder,
 		})
+}
+
+// untested
+func (m *ItemStore) GetAllNearbyUnmatched(coord map[string]float64, radius float64) ([]string, error) {
+	return m.geoDB.BatchGetAllInRadius(
+		&redis.GeoQuery{
+			Coord:  redis.GeoPos{Lon: coord["lon"], Lat: coord["lat"]},
+			Key:    m.config.unmatchedKey,
+			Radius: radius,
+			Unit:   DistUnit,
+			Order:  DistOrder,
+		},
+	)
 }
 
 // tested

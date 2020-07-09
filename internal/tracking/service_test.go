@@ -4,13 +4,13 @@ import (
 	"math/rand"
 	"sort"
 	"testing"
-	"time"
+	// "time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
 	"location-service/internal/mock"
-	"location-service/internal/streaming"
+	"location-service/internal/stream"
 	"location-service/internal/types"
 )
 
@@ -20,15 +20,15 @@ var (
 	orderStore   *mock.ItemStore
 	courierStore *mock.ItemStore
 
-	clientDrain *streaming.Drain
+	clientDrain *stream.Drain
 )
 
 func setupServiceTests() {
 	courierStore = mock.NewItemStore()
 	orderStore = mock.NewItemStore()
 
-	svcDrain := streaming.NewDrain()
-	clientDrain = streaming.NewDrain()
+	svcDrain := stream.NewDrain()
+	clientDrain = stream.NewDrain()
 
 	svcDrain.SetInput(clientDrain.GetOutput())
 	clientDrain.SetInput(svcDrain.GetOutput())
@@ -345,23 +345,23 @@ func TestUpsertCourier_AddBadCoordCases(t *testing.T) {
 	}
 }
 
-func TestTrackCourier(t *testing.T) {
-	setupServiceTests()
-
-	courierStore.UpdateFn = func() error { return nil }
-	// 		courierStore.AddNewFn = func() error { return nil }
-
-	svc.TrackCourier("id")
-	dto := TrackCourierDTO{}
-
-	for {
-		time.Sleep(2 * time.Second)
-		dto.Location.Lon = rand.Float64()
-		dto.Location.Lat = rand.Float64()
-		dto.Speed = rand.Float64()
-		dto.Radius = rand.Float64()
-
-		clientDrain.Send(dto)
-	}
-
-}
+// func TestTrackCourier(t *testing.T) {
+// 	setupServiceTests()
+//
+// 	courierStore.UpdateFn = func() error { return nil }
+// 	// 		courierStore.AddNewFn = func() error { return nil }
+//
+// 	svc.TrackCourier("id")
+// 	dto := TrackCourierDTO{}
+//
+// 	for {
+// 		time.Sleep(2 * time.Second)
+// 		dto.Location.Lon = rand.Float64()
+// 		dto.Location.Lat = rand.Float64()
+// 		dto.Speed = rand.Float64()
+// 		dto.Radius = rand.Float64()
+//
+// 		clientDrain.Send(dto)
+// 	}
+//
+// }

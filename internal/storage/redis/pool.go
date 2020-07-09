@@ -17,7 +17,7 @@ type PoolConfig struct {
 	maxActiveConn   int
 }
 
-func NewPool(redisCfg *types.RedisConfig) *redis.Pool {
+func NewPool(redisCfg types.RedisConfig) *redis.Pool {
 	cfg := setConfig(redisCfg)
 
 	return &redis.Pool{
@@ -37,7 +37,7 @@ func NewPool(redisCfg *types.RedisConfig) *redis.Pool {
 	}
 }
 
-func setConfig(redisCfg *types.RedisConfig) PoolConfig {
+func setConfig(redisCfg types.RedisConfig) PoolConfig {
 	return PoolConfig{
 		idleConnTimeout: redisCfg.IdleTimeout,
 		maxIdleConn:     redisCfg.MaxIdle,

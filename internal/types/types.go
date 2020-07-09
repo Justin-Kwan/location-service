@@ -7,6 +7,9 @@ import (
 )
 
 var (
+	// Drain errors
+	ErrDrainOutputNil     = errors.New("Drain ouput channel is nil")
+
 	// Redis DB errors
 	ErrKeyNotFound    = errors.Errorf("Key passed in does not exist")
 	ErrMemberNotFound = errors.Errorf("Member passed in does not exist")
@@ -71,9 +74,19 @@ type (
 	Drain interface {
 		SetInput(<-chan interface{})
 		GetOutput() <-chan interface{}
-		Send(interface{})
-		Read() interface{}
+		Send(interface{}) bool
+		Read() (interface{}, bool)
 		Close()
+	}
+
+	TrackingService interface {
+		TrackCourier(id string) error
+		DeleteCourier(id string) error
+		GetAllNearbyCouriers(coord map[string]float64, radius float64) ([]string, error)
+		AddNewOrder(location map[string]float64, id string) error
+		DeleteOrder(id string) error
+		GetAllNearbyUnmatchedOrders(coord map[string]float64, radius float64) ([]string, error)
+		GetAllNearbyOrders(coord map[string]float64, radius float64) ([]string, error)
 	}
 )
 

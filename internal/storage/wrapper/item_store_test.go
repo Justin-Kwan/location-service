@@ -126,8 +126,8 @@ func getTestCouriers() []mock.Courier {
 
 func setupItemStoreTests() func() {
 	cfg := testutil.GetConfig()
-	keyDBPool := redis.NewPool(&(*cfg).RedisKeyDB)
-	geoDBPool := redis.NewPool(&(*cfg).RedisGeoDB)
+	keyDBPool := redis.NewPool(cfg.RedisKeyDB)
+	geoDBPool := redis.NewPool(cfg.RedisGeoDB)
 
 	keyDB = redis.NewKeyDB(keyDBPool)
 	geoDB = redis.NewGeoDB(geoDBPool)
@@ -135,7 +135,7 @@ func setupItemStoreTests() func() {
 	keyDB.Clear()
 	geoDB.Clear()
 
-	itemStore = NewItemStore(keyDB, geoDB, &(*cfg).Stores.Courier)
+	itemStore = NewItemStore(keyDB, geoDB, cfg.Stores.Courier)
 
 	return func() {
 		keyDB.Clear()

@@ -16,6 +16,7 @@ type SocketHandler struct {
 	config   WsServerConfig
 	upgrader *websocket.Upgrader
 	client   *websocket.Conn
+	service  types.TrackingService
 }
 
 type WsServerConfig struct {
@@ -27,19 +28,23 @@ type WsServerConfig struct {
 	Path         string
 }
 
-// TODO: inject handler with services/db needed!
-func NewSocketHandler(wsCfg *types.WsServerConfig) *SocketHandler {
-	upgrader := websocket.Upgrader{}
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-
+// TODO: inject services needed!
+func NewSocketHandler(trackingSvc types.TrackingService, wsCfg types.WsServerConfig) *SocketHandler {
+	upgrader := &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	
 	return &SocketHandler{
-		upgrader: &upgrader,
-		config:   setConfig(wsCfg),
-		client:   nil,
+		upgrader: upgrader,
+		config: setConfig(wsCfg),
+		client: nil,
+		service: trackingSvc,
 	}
 }
 
-func setConfig(wsCfg *types.WsServerConfig) WsServerConfig {
+func setConfig(wsCfg types.WsServerConfig) WsServerConfig {
 	return WsServerConfig{
 		ReadDeadline: wsCfg.ReadDeadline,
 		ReadTimeout:  wsCfg.ReadTimeout,
@@ -104,16 +109,16 @@ func (sh *SocketHandler) handleMessage() {
 
 // called on new socket connection?
 // func handleRegisterCourier() {
-	// auth, middleware, check not already registered
-	// go svc.TrackCourier(id)
-	// return connectionEstablished
+// auth, middleware, check not already registered
+// go svc.TrackCourier(id)
+// return connectionEstablished
 // }
 
 // func handleTrackCourier(c *websocket.Conn, msg []byte) {
-	// auth and middleware validation
-	// convert msg to dto
-	// drain.Send(dto)
-	// arbitrary response?
+// auth and middleware validation
+// convert msg to dto
+// drain.Send(dto)
+// arbitrary response?
 // }
 
 // // map of key and callback function

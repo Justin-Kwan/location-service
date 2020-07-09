@@ -62,7 +62,7 @@ func getTestKeys() []TestKey {
 
 func setupKeyDBTests() func() {
 	cfg := testutil.GetConfig()
-	KeyDBPool := NewPool(&(*cfg).RedisKeyDB)
+	KeyDBPool := NewPool(cfg.RedisKeyDB)
 
 	keyDB = NewKeyDB(KeyDBPool)
 	keyDB.Clear()
