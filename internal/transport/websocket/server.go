@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	// "github.com/pkg/errors"
 	"github.com/gorilla/websocket"
 
 	"location-service/internal/types"
@@ -17,6 +16,7 @@ type SocketHandler struct {
 	upgrader *websocket.Upgrader
 	client   *websocket.Conn
 	service  types.TrackingService
+	drain    types.Drain
 }
 
 type WsServerConfig struct {
@@ -28,30 +28,30 @@ type WsServerConfig struct {
 	Path         string
 }
 
-// TODO: inject services needed!
-func NewSocketHandler(trackingSvc types.TrackingService, wsCfg types.WsServerConfig) *SocketHandler {
+func NewSocketHandler(svc types.TrackingService, dn types.Drain, cfg types.WsServerConfig) *SocketHandler {
 	upgrader := &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
 	}
-	
+
 	return &SocketHandler{
 		upgrader: upgrader,
-		config: setConfig(wsCfg),
-		client: nil,
-		service: trackingSvc,
+		config:   setConfig(cfg),
+		client:   nil,
+		service:  svc,
+		drain:    dn,
 	}
 }
 
-func setConfig(wsCfg types.WsServerConfig) WsServerConfig {
+func setConfig(cfg types.WsServerConfig) WsServerConfig {
 	return WsServerConfig{
-		ReadDeadline: wsCfg.ReadDeadline,
-		ReadTimeout:  wsCfg.ReadTimeout,
-		WriteTimeout: wsCfg.WriteTimeout,
-		MsgSizeLimit: wsCfg.MsgSizeLimit,
-		Addr:         wsCfg.Addr,
-		Path:         wsCfg.Path,
+		ReadDeadline: cfg.ReadDeadline,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+		MsgSizeLimit: cfg.MsgSizeLimit,
+		Addr:         cfg.Addr,
+		Path:         cfg.Path,
 	}
 }
 
@@ -70,11 +70,14 @@ func (sh *SocketHandler) Serve() {
 
 func (sh *SocketHandler) handleConnection(w http.ResponseWriter, r *http.Request) {
 	// call controller?? -> auth before upgrading the connection
-	// pass a service's interface and respond in callback
 
 	conn, err := sh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Fprintf(w, "Error upgrading connection")
+		log.Fatalf(err.Error())
+	}
+
+	if err := sh.handleRegisterCourier(w, r); err != nil {
 		log.Fatalf(err.Error())
 	}
 
@@ -95,10 +98,7 @@ func (sh *SocketHandler) handleMessage() {
 		}
 
 		log.Printf("%s sent: %s\n", sh.client.RemoteAddr(), string(msg))
-
-		// when a msg is received
-		// mapping to dto
-		// d.Send(courierDTO)
+		sh.handleTrackCourier(msgType, msg)
 
 		if err = sh.client.WriteMessage(msgType, msg); err != nil {
 			log.Printf("Client Disconnected!")
@@ -107,19 +107,21 @@ func (sh *SocketHandler) handleMessage() {
 	}
 }
 
-// called on new socket connection?
-// func handleRegisterCourier() {
-// auth, middleware, check not already registered
-// go svc.TrackCourier(id)
-// return connectionEstablished
-// }
+func (sh *SocketHandler) handleRegisterCourier(w http.ResponseWriter, r *http.Request) error {
+	// start background task to track courier on new connection
+	return sh.service.TrackCourier("id")
+}
 
-// func handleTrackCourier(c *websocket.Conn, msg []byte) {
-// auth and middleware validation
-// convert msg to dto
-// drain.Send(dto)
-// arbitrary response?
-// }
+func (sh *SocketHandler) handleTrackCourier(msgType int, msg []byte) {
+	// auth and middleware schema validation
+	log.Printf("MSG: " + string(msg))
+
+	dto := types.TrackCourierDTO{}
+	types.UnmarshalJSON(string(msg), dto)
+	sh.drain.Send(dto)
+
+	sh.client.WriteMessage(msgType, []byte("location updated!"))
+}
 
 // // map of key and callback function
 // websocketHandlers = make(map[string]func(*websocket.Conn, []byte) error)

@@ -11,7 +11,7 @@ import (
 type PoolConfig struct {
 	addr            string
 	password        string
-	connProtocol    string
+	protocol        string
 	idleConnTimeout int
 	maxIdleConn     int
 	maxActiveConn   int
@@ -25,7 +25,7 @@ func NewPool(redisCfg types.RedisConfig) *redis.Pool {
 		MaxActive:   cfg.maxActiveConn,
 		IdleTimeout: time.Duration(cfg.idleConnTimeout) * time.Second,
 		Dial: func() (redis.Conn, error) {
-			return redis.Dial(cfg.connProtocol, cfg.addr)
+			return redis.Dial(cfg.protocol, cfg.addr)
 		},
 		TestOnBorrow: func(conn redis.Conn, t time.Time) error {
 			if time.Since(t) < time.Minute {
@@ -44,6 +44,6 @@ func setConfig(redisCfg types.RedisConfig) PoolConfig {
 		maxActiveConn:   redisCfg.MaxActive,
 		addr:            redisCfg.Addr,
 		password:        redisCfg.Password,
-		connProtocol:    redisCfg.ConnProtocol,
+		protocol:        redisCfg.Protocol,
 	}
 }

@@ -3,8 +3,11 @@ package wire
 import (
 	"location-service/internal/storage/redis"
 	"location-service/internal/storage/wrapper"
+
 	"location-service/internal/stream"
 	"location-service/internal/tracking"
+
+	"location-service/internal/transport/grpc"
 	"location-service/internal/transport/websocket"
 	"location-service/internal/types"
 )
@@ -80,7 +83,15 @@ func (p *Provider) ProvideSocketHandler() *websocket.SocketHandler {
 	// inject service to socket handler
 
 	return websocket.NewSocketHandler(
-    p.ProvideTrackingService(),
-    p.config.WsServer,
-  )
+		p.ProvideTrackingService(),
+		p.transportDrain,
+		p.config.WsServer,
+	)
+}
+
+func (p *Provider) ProvideGrpcHandler() *grpc.GrpcHandler {
+	return grpc.NewGrpcHandler(
+		p.ProvideTrackingService(),
+		p.config.GrpcServer,
+	)
 }

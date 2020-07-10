@@ -11,13 +11,17 @@ websocket_server:
   address:                "127.0.0.1:8080"
   path:                   "/ws"
 
+grpc_server:
+  port:                   9000
+  protocol:               "tcp"
+
 redis_keydb:
   idle_timeout:           200
   max_idle_connections:   500
   max_active_connections: 1200
   address:                "127.0.0.1:6379"
   password:               "dev_redis_password"
-  connection_protocol:    "tcp"
+  protocol:               "tcp"
 
 redis_geodb:
   idle_timeout:           200
@@ -25,7 +29,7 @@ redis_geodb:
   max_active_connections: 1200
   address:                "127.0.0.1:6386"
   password:               "dev_redis_password"
-  connection_protocol:    "tcp"
+  protocol:               "tcp"
 
 stores:
   order:

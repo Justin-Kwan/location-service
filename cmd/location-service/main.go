@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ConfigFilePath = "../../"
+	ConfigFilePath = ""
 )
 
 func main() {
@@ -27,5 +27,8 @@ func main() {
   provider := wire.NewProvider(*cfg)
 
   sh := provider.ProvideSocketHandler()
-  sh.Serve()
+  gh := provider.ProvideGrpcHandler()
+
+  go sh.Serve()
+  gh.Serve()
 }

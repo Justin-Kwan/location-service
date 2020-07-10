@@ -2,8 +2,8 @@ package tracking
 
 type Courier struct {
 	TrackedItem
-	Speed       float64 `json:"speed"`
-	Radius      float64 `json:"radius"`
+	Speed  float64 `json:"speed"`
+	Radius float64 `json:"radius"`
 }
 
 func NewCourier(id string) *Courier {

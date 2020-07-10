@@ -7,15 +7,6 @@ import (
 	"location-service/internal/types"
 )
 
-type TrackCourierDTO struct {
-	Location struct {
-		Lon float64
-		Lat float64
-	}
-	Speed  float64
-	Radius float64
-}
-
 type Service struct {
 	courierStore types.ItemStorer
 	orderStore   types.ItemStorer
@@ -52,15 +43,13 @@ func (s *Service) TrackCourier(id string) error {
 				continue
 			}
 
-			dto := Idto.(TrackCourierDTO)
-
+			dto := Idto.(types.TrackCourierDTO)
 			c.SetLocation(dto.Location.Lon, dto.Location.Lat)
 			c.SetSpeed(dto.Speed)
 			c.SetRadius(dto.Radius)
 			c.SetUpdatedAt()
 
 			s.upsertCourier(c)
-
 			s.logCourierUpdate(c)
 		}
 	}()
@@ -120,11 +109,11 @@ func (s *Service) DeleteOrder(id string) error {
 }
 
 // test!
-func (s *Service) GetAllNearbyUnmatchedOrders(coord map[string]float64, radius float64) ([]string, error) {
-	return s.orderStore.GetAllNearbyUnmatched(coord, radius)
+func (s *Service) GetAllNearbyOrders(coord map[string]float64, radius float64) ([]string, error) {
+	return s.orderStore.GetAllNearby(coord, radius)
 }
 
 // test!
-func (s *Service) GetAllNearbyOrders(coord map[string]float64, radius float64) ([]string, error) {
-	return s.orderStore.GetAllNearby(coord, radius)
+func (s *Service) GetAllNearbyUnmatchedOrders(coord map[string]float64, radius float64) ([]string, error) {
+	return s.orderStore.GetAllNearbyUnmatched(coord, radius)
 }
