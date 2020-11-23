@@ -28,27 +28,31 @@ func NewProvider(cfg types.Config) *Provider {
 
 func (p *Provider) ProvideKeyDB() *redis.KeyDB {
 	return redis.NewKeyDB(
-		redis.NewPool(p.config.RedisGeoDB),
+		redis.NewPool(&p.config.RedisKeyDB),
 	)
 }
 
 func (p *Provider) ProvideGeoDB() *redis.GeoDB {
 	return redis.NewGeoDB(
-		redis.NewPool(p.config.RedisGeoDB),
+		redis.NewPool(&p.config.RedisGeoDB),
 	)
 }
 
 ///////////////////////////// providing store ////////////////////////////////
 
-func (p *Provider) ProvideCourierStore() *wrapper.ItemStore {
-	return p.provideItemStore(p.config.Stores.Courier)
+func (p *Provider) ProvideCourierStore() *wrapper.CourierStore {
+	return wrapper.NewCourierStore(
+		p.provideItemStore(&p.config.Stores.Courier),
+	)
 }
 
-func (p *Provider) ProvideOrderStore() *wrapper.ItemStore {
-	return p.provideItemStore(p.config.Stores.Order)
+func (p *Provider) ProvideOrderStore() *wrapper.OrderStore {
+	return wrapper.NewOrderStore(
+		p.provideItemStore(&p.config.Stores.Order),
+	)
 }
 
-func (p *Provider) provideItemStore(cfg types.StoreConfig) *wrapper.ItemStore {
+func (p *Provider) provideItemStore(cfg *types.StoreConfig) *wrapper.ItemStore {
 	return wrapper.NewItemStore(
 		p.ProvideKeyDB(),
 		p.ProvideGeoDB(),
@@ -92,6 +96,6 @@ func (p *Provider) ProvideSocketHandler() *websocket.SocketHandler {
 func (p *Provider) ProvideGrpcHandler() *grpc.GrpcHandler {
 	return grpc.NewGrpcHandler(
 		p.ProvideTrackingService(),
-		p.config.GrpcServer,
+		&p.config.GrpcServer,
 	)
 }

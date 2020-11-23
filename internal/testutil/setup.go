@@ -3,8 +3,8 @@ package testutil
 import (
 	"log"
 
+	"location-service/internal/config"
 	"location-service/internal/types"
-  "location-service/internal/config"
 )
 
 const (

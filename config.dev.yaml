@@ -13,23 +13,23 @@ websocket_server:
 
 grpc_server:
   port:                   9000
-  protocol:               "tcp"
+  connection_protocol:    "tcp"
 
 redis_keydb:
   idle_timeout:           200
   max_idle_connections:   500
   max_active_connections: 1200
-  address:                "127.0.0.1:6379"
+  address:                "127.0.0.1:6380"
   password:               "dev_redis_password"
-  protocol:               "tcp"
+  connection_protocol:    "tcp"
 
 redis_geodb:
   idle_timeout:           200
   max_idle_connections:   500
   max_active_connections: 1200
-  address:                "127.0.0.1:6386"
+  address:                "127.0.0.1:6390"
   password:               "dev_redis_password"
-  protocol:               "tcp"
+  connection_protocol:    "tcp"
 
 stores:
   order:

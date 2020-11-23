@@ -1,4 +1,4 @@
-package tracking
+package internal
 
 import (
 	"testing"
@@ -27,6 +27,15 @@ func getTestTrackedItems() []TrackedItem {
 			UpdatedAt: 987612432101,
 		},
 	}
+}
+
+func TestNewTrackedItem_NormalCases(t *testing.T) {
+	setupMinUnixNanoTime()
+	ti := NewTrackedItem("test_id")
+
+	assert.Equal(t, ti.GetID(), "test_id")
+	assert.GreaterOrEqual(t, ti.CreatedAt, MinUnixNanoTime)
+	assert.GreaterOrEqual(t, ti.UpdatedAt, MinUnixNanoTime)
 }
 
 func TestSetLocation_NormalCases(t *testing.T) {
@@ -65,5 +74,14 @@ func TestSetUpdatedAt_NormalCases(t *testing.T) {
 
 		// assert correct location set
 		assert.GreaterOrEqual(t, ti.UpdatedAt, MinUnixNanoTime)
+	}
+}
+
+func TestGetID_NormalCases(t *testing.T) {
+	tis := getTestTrackedItems()
+
+	for _, ti := range tis {
+		// function under test
+		assert.Equal(t, ti.GetID(), ti.ID)
 	}
 }

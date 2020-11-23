@@ -1,8 +1,13 @@
+// Redis geo indexing: https://redis.io/commands/georadius
+
 package redis
 
 import (
+	"log"
+
 	"github.com/gomodule/redigo/redis"
 
+	"location-service/internal/errors"
 	"location-service/internal/types"
 )
 
@@ -19,7 +24,7 @@ type GeoQuery struct {
 	FromKey string
 	ToKey   string
 	Unit    string
-	Order   string
+	OrderBy string
 }
 
 type GeoPos struct {
@@ -27,17 +32,12 @@ type GeoPos struct {
 	Lat float64
 }
 
-// Returns a new geo database access struct given a redis connection
-// pool and an index name to store all longitude, latitude pairs
-// within the key values store.
 func NewGeoDB(pool *redis.Pool) *GeoDB {
 	conn := pool.Get()
 	defer conn.Close()
 
-	gs := getGeoScripts()
-
 	return &GeoDB{
-		scripts: loadScripts(conn, gs),
+		scripts: loadScripts(conn, getGeoScripts()),
 		pool:    pool,
 	}
 }
@@ -105,7 +105,7 @@ func (db *GeoDB) BatchSetIfExists(qs ...*GeoQuery) error {
 	return err
 }
 
-// Returns a member's corosponding coordinates in a map.
+// Get returns a member's corosponding coordinates in a map.
 func (db *GeoDB) Get(q *GeoQuery) (*GeoPos, error) {
 	conn := db.pool.Get()
 	defer conn.Close()
@@ -123,8 +123,8 @@ func (db *GeoDB) Get(q *GeoQuery) (*GeoPos, error) {
 	return &GeoPos{Lon: res[0][0], Lat: res[0][1]}, nil
 }
 
-// Returns a list of all members within the given radius of given
-// coordinates.
+// GetAllInRadius returns a list of all members within the given radius
+// of given coordinates.
 func (db *GeoDB) GetAllInRadius(q *GeoQuery) ([]string, error) {
 	conn := db.pool.Get()
 	defer conn.Close()
@@ -136,7 +136,7 @@ func (db *GeoDB) GetAllInRadius(q *GeoQuery) ([]string, error) {
 		q.Coord.Lat,
 		q.Radius,
 		q.Unit,
-		q.Order,
+		q.OrderBy,
 	))
 }
 
@@ -144,51 +144,62 @@ func (db *GeoDB) GetAllInRadius(q *GeoQuery) ([]string, error) {
 // radius of given coordinates, searching in multiple keys given the
 // number of queries. The operations are executed in a non-tranactional
 // pipeline.
+// TODO: limit result slice size by COUNT
 func (db *GeoDB) BatchGetAllInRadius(qs ...*GeoQuery) ([]string, error) {
 	if len(qs) == 0 {
-		return nil, types.ErrNoBatchQueries
+		return nil, errors.NoBatchQueries
 	}
+
+	log.Println("<<<<<<<<<<<<<<< GEODB >>>>>>>>>>>>>>")
 
 	conn := db.pool.Get()
 	defer conn.Close()
 
 	for _, q := range qs {
-		conn.Send(
+		log.Println("GEO QUERY", q)
+		err := conn.Send(
 			"GEORADIUS",
 			q.Key,
 			q.Coord.Lon,
 			q.Coord.Lat,
 			q.Radius,
 			q.Unit,
-			q.Order,
+			q.OrderBy,
 		)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	conn.Flush()
+	if err := conn.Flush(); err != nil {
+		return nil, err
+	}
 
 	res, err := db.readReplies(len(qs), conn)
+	log.Println("REDIS GEO RES", res)
 	return redis.Strings(res, err)
 }
 
-// readReplies returns an agreggated list interfaces returned by redis
-// pipeline queries.
+// readReplies returns an agreggated list of response interfaces
+// returned by all redis pipeline queries.
 func (db *GeoDB) readReplies(qCount int, conn redis.Conn) ([]interface{}, error) {
-	allRes := make([]interface{}, 0)
+	replies := make([]interface{}, 0)
 
 	for i := 0; i < qCount; i++ {
-		res, err := conn.Receive()
+		reply, err := conn.Receive()
 		if err != nil {
 			return nil, err
 		}
 
-		allRes = append(allRes, res.([]interface{})...)
+		replies = append(replies, reply.([]interface{})...)
 	}
 
-	return allRes, nil
+	return replies, nil
 }
 
-// Moves a member from its current key into a new key. The key is
-// then deleted from the old index.
+// MoveMember moves a member from its current key into a new key.
+// The member is then deleted from the old key.
 func (db *GeoDB) MoveMember(q *GeoQuery) error {
 	conn := db.pool.Get()
 	defer conn.Close()
@@ -233,7 +244,7 @@ func (db *GeoDB) BatchDelete(qs ...*GeoQuery) error {
 	return err
 }
 
-// Clears the entire key member store.
+// Clear clears the entire key member store.
 func (db *GeoDB) Clear() error {
 	conn := db.pool.Get()
 	defer conn.Close()

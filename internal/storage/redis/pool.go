@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"log"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -17,28 +18,43 @@ type PoolConfig struct {
 	maxActiveConn   int
 }
 
-func NewPool(redisCfg types.RedisConfig) *redis.Pool {
+func NewPool(redisCfg *types.RedisConfig) *redis.Pool {
 	cfg := setConfig(redisCfg)
 
-	return &redis.Pool{
+	pool := &redis.Pool{
 		MaxIdle:     cfg.maxIdleConn,
 		MaxActive:   cfg.maxActiveConn,
 		IdleTimeout: time.Duration(cfg.idleConnTimeout) * time.Second,
 		Dial: func() (redis.Conn, error) {
-			return redis.Dial(cfg.protocol, cfg.addr)
+			log.Println("REDIS ADDR: ", cfg.addr)
+			log.Println("REDIS PROTOCOL: ", cfg.protocol)
+
+			conn, err := redis.Dial(cfg.protocol, cfg.addr)
+			if err != nil {
+				panic(err)
+			}
+
+			return conn, err
 		},
 		TestOnBorrow: func(conn redis.Conn, t time.Time) error {
 			if time.Since(t) < time.Minute {
 				return nil
 			}
 			_, err := conn.Do("PING")
+
+			if err != nil {
+				panic(err)
+			}
+
 			return err
 		},
 	}
+
+	return pool
 }
 
-func setConfig(redisCfg types.RedisConfig) PoolConfig {
-	return PoolConfig{
+func setConfig(redisCfg *types.RedisConfig) *PoolConfig {
+	return &PoolConfig{
 		idleConnTimeout: redisCfg.IdleTimeout,
 		maxIdleConn:     redisCfg.MaxIdle,
 		maxActiveConn:   redisCfg.MaxActive,

@@ -1,0 +1,104 @@
+/**
+ * grpc contract definiton for location service api,
+ * consumed by internal services
+ */
+
+syntax = "proto3";
+
+package order;
+
+// message CheckHealthRequest {}
+// message CheckHealthResponse {
+//   int64 serviceStatus = 1;
+// }
+
+// // Get courier function
+// message GetCourierRequest {
+//   string id = 1;
+// }
+// message GetCourierResponse {
+//   string courierData = 1;
+//   int64 status = 2;
+// }
+
+// // Delete courier function
+// message DeleteCourierRequest {
+//   string id = 1;
+// }
+// message DeleteCourierResponse {
+//   int64 status = 1
+// }
+
+// // Get all nearby couriers function
+// message GetAllNearbyCouriersRequest {
+//   Coord coord = 1;
+// }
+// message GetAllNearbyCouriersResponse {
+//   repeated Courier couriers = 1;
+//   int64 status = 2;
+// }
+
+// // Add order function
+// message AddNewOrderRequest {
+//   string id = 1;
+//   Coord coord = 2;
+// }
+// message AddNewOrderResponse {
+//   int64 status = 1;
+// }
+
+// // Delete order function
+// message DeleteOrderRequest {
+//   string id = 1;
+// }
+// message DeleteOrderResponse {
+//   int64 status = 1;
+// }
+
+message FindAllNearbyOrderIDsRequest {
+  Location location = 1;
+  double radius = 2;
+}
+
+message FindAllNearbyOrderIDsReply {
+    repeated string order_ids = 1; 
+    int64 status = 2;
+}
+
+// message Courier {
+//   string id = 1;
+//   Coord coord = 2;
+//   float speed = 1
+//   float radius = 2;
+// }
+
+////////
+
+// message Order {
+//   string id = 1;
+//   Coord coord = 2;
+// }
+
+message Location {
+    double lon = 1;
+    double lat = 2;
+}
+
+service OrderService {
+    rpc FindAllNearbyOrderIDs(FindAllNearbyOrderIDsRequest) returns (FindAllNearbyOrderIDsReply);
+}
+
+// service LocationService {
+//   rpc CheckHealth(CheckHealthRequest) returns (CheckHealthResponse) {}
+
+//   // courier functions
+//   rpc GetCourier(GetCourierRequest) returns (GetCourierResponse) {}
+//   rpc DeleteCourier(DeleteCourierRequest) returns (DeleteCouierResponse) {}
+//   rpc GetAllNearbyCouriers(GetAllNearbyCouriersRequest) returns (GetAllNearbyCouriersResponse) {}
+
+//   // order functions
+//   rpc AddNewOrder(AddNewOrderRequest) returns (AddNewOrderResponse) {}
+//   rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse) {}
+//   rpc GetAllNearbyOrders(GetAllNearbyOrdersRequest) returns (GetAllNearbyOrdersResponse) {}
+//   rpc GetAllNearbyUnmatchedOrders(GetAllNearbyOrdersRequest) returns (GetAllNearbyOrdersResponse) {}
+// }

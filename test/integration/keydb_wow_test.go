@@ -1,16 +1,18 @@
-package redis
+package integration
 
 import (
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"location-service/internal/storage/redis"
 	"location-service/internal/testutil"
 	"location-service/internal/types"
 )
 
 var (
-	keyDB *KeyDB
+	keyDB *redis.KeyDB
 )
 
 type TestKey struct {
@@ -62,11 +64,12 @@ func getTestKeys() []TestKey {
 
 func setupKeyDBTests() func() {
 	cfg := testutil.GetConfig()
-	KeyDBPool := NewPool(cfg.RedisKeyDB)
+	KeyDBPool := redis.NewPool(&cfg.RedisKeyDB)
 
-	keyDB = NewKeyDB(KeyDBPool)
+	keyDB = redis.NewKeyDB(KeyDBPool)
 	keyDB.Clear()
 
+	// test cleanup function
 	return func() {
 		keyDB.Clear()
 	}
@@ -88,6 +91,9 @@ func populateKeyDB(t *testing.T) {
 			teardownTests()
 			t.Fatalf(err.Error())
 		}
+
+		log.Println("GOTTEN KEY: ", val)
+		log.Println("GOTTEN KEY: ", val)
 
 		assert.Equal(t, tk.Val, val)
 	}

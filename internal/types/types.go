@@ -1,5 +1,7 @@
 package types
 
+//go:generate mockgen -destination=../mocks/mock_drain.go -package=mocks . Drain
+
 import (
 	"encoding/json"
 
@@ -36,7 +38,7 @@ type (
 
 	GrpcServerConfig struct {
 		Port     string `yaml:"port"`
-		Protocol string `yaml:"protocol"`
+		Protocol string `yaml:"connection_protocol"`
 	}
 
 	RedisConfig struct {
@@ -45,7 +47,7 @@ type (
 		MaxActive   int    `yaml:"max_active_connections"`
 		Addr        string `yaml:"address"`
 		Password    string `yaml:"password"`
-		Protocol    string `yaml:"protocol"`
+		Protocol    string `yaml:"connection_protocol"`
 	}
 
 	StoresConfig struct {
@@ -60,39 +62,12 @@ type (
 )
 
 type (
-	TrackedItem interface {
-		GetID() string
-		GetLon() float64
-		GetLat() float64
-	}
-
-	ItemStorer interface {
-		AddNew(TrackedItem) error
-		Get(id string, t TrackedItem) error
-		GetAllNearby(coord map[string]float64, radius float64) ([]string, error)
-		GetAllNearbyUnmatched(coord map[string]float64, radius float64) ([]string, error)
-		Update(t TrackedItem) error
-		Delete(id string) error
-		SetUnmatched(id string) error
-		SetMatched(id string) error
-	}
-
 	Drain interface {
 		SetInput(<-chan interface{})
 		GetOutput() <-chan interface{}
 		Send(interface{}) bool
 		Read() (interface{}, bool)
 		Close()
-	}
-
-	TrackingService interface {
-		TrackCourier(id string) error
-		DeleteCourier(id string) error
-		GetAllNearbyCouriers(coord map[string]float64, radius float64) ([]string, error)
-		AddNewOrder(location map[string]float64, id string) error
-		DeleteOrder(id string) error
-		GetAllNearbyUnmatchedOrders(coord map[string]float64, radius float64) ([]string, error)
-		GetAllNearbyOrders(coord map[string]float64, radius float64) ([]string, error)
 	}
 )
 

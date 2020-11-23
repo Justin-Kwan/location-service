@@ -1,27 +1,30 @@
 package wrapper
 
 import (
+	"location-service/internal"
 	"location-service/internal/storage/redis"
 	"location-service/internal/types"
+	"log"
 )
 
 const (
-	DistUnit  = "km"
-	DistOrder = "ASC"
+	kmUnit     = "km"
+	orderByAsc = "ASC"
 )
 
 type ItemStore struct {
-	config StoreConfig
+	config *storeConfig
 	keyDB  KeyDB
 	geoDB  GeoDB
 }
 
-type StoreConfig struct {
+// TODO: store unit of measurement in config
+type storeConfig struct {
 	matchedKey   string
 	unmatchedKey string
 }
 
-func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg types.StoreConfig) *ItemStore {
+func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg *types.StoreConfig) *ItemStore {
 	return &ItemStore{
 		keyDB:  keyDB,
 		geoDB:  geoDB,
@@ -29,15 +32,15 @@ func NewItemStore(keyDB KeyDB, geoDB GeoDB, cfg types.StoreConfig) *ItemStore {
 	}
 }
 
-func setConfig(cfg types.StoreConfig) StoreConfig {
-	return StoreConfig{
+func setConfig(cfg *types.StoreConfig) *storeConfig {
+	return &storeConfig{
 		matchedKey:   cfg.MatchedKey,
 		unmatchedKey: cfg.UnmatchedKey,
 	}
 }
 
-// tested
-func (m *ItemStore) AddNew(t types.TrackedItem) error {
+// AddNewItem ...
+func (m *ItemStore) addNewItem(t *internal.TrackedItem) error {
 	tStr, err := types.MarshalJSON(t)
 	if err != nil {
 		return err
@@ -49,108 +52,103 @@ func (m *ItemStore) AddNew(t types.TrackedItem) error {
 
 	return m.geoDB.Set(
 		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: t.GetLon(), Lat: t.GetLat()},
+			Coord:  redis.GeoPos{Lon: t.Coord.Lon, Lat: t.Coord.Lat},
 			Key:    m.config.unmatchedKey,
 			Member: t.GetID(),
 		})
 }
 
-// tested
-func (m *ItemStore) Get(id string, t types.TrackedItem) error {
+// GetItem ...
+func (m *ItemStore) getItem(id string) (*internal.TrackedItem, error) {
+	t := &internal.TrackedItem{}
+
 	tStr, err := m.keyDB.Get(id)
 	if err != nil {
-		return err
+		return t, err
 	}
 
-	return types.UnmarshalJSON(tStr, t)
+	err = types.UnmarshalJSON(tStr, t)
+	return t, err
 }
 
-func (m *ItemStore) GetUnmatchedNearby(coord map[string]float64, radius float64) ([]string, error) {
-	return m.geoDB.BatchGetAllInRadius(
+// GetUnmatchedNearby ...
+func (m *ItemStore) getUnmatchedNearby(coord map[string]float64, radius float64) ([]string, error) {
+	itemIDs, err := m.geoDB.BatchGetAllInRadius(
 		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: coord["lon"], Lat: coord["lat"]},
-			Key:    m.config.unmatchedKey,
-			Radius: radius,
-			Unit:   DistUnit,
-			Order:  DistOrder,
+			Coord:   redis.GeoPos{Lon: coord["lon"], Lat: coord["lat"]},
+			Key:     m.config.unmatchedKey,
+			Radius:  radius,
+			Unit:    kmUnit,
+			OrderBy: orderByAsc,
 		})
+
+	return itemIDs, err
 }
 
-// proper args??????
-// tested
-func (m *ItemStore) GetAllNearby(coord map[string]float64, radius float64) ([]string, error) {
-	return m.geoDB.BatchGetAllInRadius(
+// FindAllNearbyItemIDs returns all IDs of items within
+// a given radius of a coordinate (of trackable item).
+func (m *ItemStore) findAllNearbyItemIDs(coord *internal.Location, radius float64) ([]string, error) {
+	log.Println("<<<<<<<<<<<<<<< ITEM STORE >>>>>>>>>>")
+	log.Println("COORD LON REQUESTED", coord.Lon)
+	log.Println("COORD LAT REQUESTED", coord.Lat)
+	log.Println("SEARCH RADIUS", radius)
+
+	itemIDs, err := m.geoDB.BatchGetAllInRadius(
 		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: coord["lon"], Lat: coord["lat"]},
-			Key:    m.config.unmatchedKey,
-			Radius: radius,
-			Unit:   DistUnit,
-			Order:  DistOrder,
+			Coord:   redis.GeoPos{Lon: coord.Lon, Lat: coord.Lat},
+			Key:     m.config.unmatchedKey,
+			Radius:  radius,
+			Unit:    kmUnit,
+			OrderBy: orderByAsc,
 		},
 		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: coord["lon"], Lat: coord["lat"]},
-			Key:    m.config.matchedKey,
-			Radius: radius,
-			Unit:   DistUnit,
-			Order:  DistOrder,
+			Coord:   redis.GeoPos{Lon: coord.Lon, Lat: coord.Lat},
+			Key:     m.config.matchedKey,
+			Radius:  radius,
+			Unit:    kmUnit,
+			OrderBy: orderByAsc,
 		})
+
+	return itemIDs, err
 }
 
-// untested
-func (m *ItemStore) GetAllNearbyUnmatched(coord map[string]float64, radius float64) ([]string, error) {
-	return m.geoDB.BatchGetAllInRadius(
-		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: coord["lon"], Lat: coord["lat"]},
-			Key:    m.config.unmatchedKey,
-			Radius: radius,
-			Unit:   DistUnit,
-			Order:  DistOrder,
-		},
-	)
-}
-
-// tested
-func (m *ItemStore) Update(t types.TrackedItem) error {
+// Update ...
+func (m *ItemStore) update(t *internal.TrackedItem) error {
 	tStr, err := types.MarshalJSON(t)
 	if err != nil {
 		return err
 	}
 
-	if err := m.keyDB.SetIfExists(t.GetID(), tStr); err != nil {
+	if err := m.keyDB.SetIfExists(t.ID, tStr); err != nil {
 		return err
 	}
 
 	return m.geoDB.BatchSetIfExists(
 		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: t.GetLon(), Lat: t.GetLat()},
+			Coord:  redis.GeoPos{Lon: t.Coord.Lon, Lat: t.Coord.Lat},
 			Key:    m.config.unmatchedKey,
 			Member: t.GetID(),
 		},
 		&redis.GeoQuery{
-			Coord:  redis.GeoPos{Lon: t.GetLon(), Lat: t.GetLat()},
+			Coord:  redis.GeoPos{Lon: t.Coord.Lon, Lat: t.Coord.Lat},
 			Key:    m.config.matchedKey,
 			Member: t.GetID(),
 		})
 }
 
-// tested
-func (m *ItemStore) Delete(id string) error {
+// Delete ...
+func (m *ItemStore) delete(id string) error {
 	if err := m.keyDB.Delete(id); err != nil {
 		return err
 	}
 
 	return m.geoDB.BatchDelete(
-		&redis.GeoQuery{
-			Key:    m.config.unmatchedKey,
-			Member: id,
-		},
-		&redis.GeoQuery{
-			Key:    m.config.matchedKey,
-			Member: id,
-		})
+		&redis.GeoQuery{Key: m.config.unmatchedKey, Member: id},
+		&redis.GeoQuery{Key: m.config.matchedKey, Member: id})
 }
 
-func (m *ItemStore) SetMatched(id string) error {
+// SetMatched ...
+func (m *ItemStore) setMatched(id string) error {
 	return m.geoDB.MoveMember(&redis.GeoQuery{
 		Member:  id,
 		FromKey: m.config.unmatchedKey,
@@ -158,7 +156,8 @@ func (m *ItemStore) SetMatched(id string) error {
 	})
 }
 
-func (m *ItemStore) SetUnmatched(id string) error {
+// SetUnmatched ...
+func (m *ItemStore) setUnmatched(id string) error {
 	return m.geoDB.MoveMember(&redis.GeoQuery{
 		Member:  id,
 		FromKey: m.config.matchedKey,

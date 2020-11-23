@@ -1,10 +1,10 @@
 package main
 
 import (
-  "log"
+	"log"
 
-  "location-service/internal/wire"
-  "location-service/internal/config"
+	"location-service/internal/config"
+	"location-service/internal/wire"
 )
 
 const (
@@ -24,11 +24,13 @@ func main() {
 
 	log.Printf("App config: %+v \n", *cfg)
 
-  provider := wire.NewProvider(*cfg)
+	provider := wire.NewProvider(*cfg)
 
-  sh := provider.ProvideSocketHandler()
-  gh := provider.ProvideGrpcHandler()
+	// sh := provider.ProvideSocketHandler()
+	gh := provider.ProvideGrpcHandler()
 
-  go sh.Serve()
-  gh.Serve()
+	// go sh.Serve()
+	if err := gh.Serve(); err != nil {
+		panic(err)
+	}
 }

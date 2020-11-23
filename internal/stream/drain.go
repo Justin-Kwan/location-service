@@ -42,9 +42,9 @@ func (d *Drain) Send(data interface{}) bool {
 // the message is returned, with a boolean value indication.
 func (d *Drain) Read() (interface{}, bool) {
 	select {
-	case data := <-d.input:										// if received msg
+	case data := <-d.input: // if received msg
 		return data, true
-	default:																	// otherwise no msg
+	default: // otherwise no msg
 		return nil, false
 	}
 }

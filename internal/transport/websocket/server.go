@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"location-service/internal/transport"
 	"location-service/internal/types"
 )
 
@@ -15,7 +16,7 @@ type SocketHandler struct {
 	config   WsServerConfig
 	upgrader *websocket.Upgrader
 	client   *websocket.Conn
-	service  types.TrackingService
+	service  transport.TrackingService
 	drain    types.Drain
 }
 
@@ -28,7 +29,7 @@ type WsServerConfig struct {
 	Path         string
 }
 
-func NewSocketHandler(svc types.TrackingService, dn types.Drain, cfg types.WsServerConfig) *SocketHandler {
+func NewSocketHandler(svc transport.TrackingService, dn types.Drain, cfg types.WsServerConfig) *SocketHandler {
 	upgrader := &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true

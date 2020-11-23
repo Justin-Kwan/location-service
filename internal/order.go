@@ -1,7 +1,7 @@
-package tracking
+package internal
 
 type Order struct {
-	TrackedItem
+	*TrackedItem
 }
 
 func NewOrder(id string) *Order {
